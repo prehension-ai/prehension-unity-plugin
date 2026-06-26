@@ -1,0 +1,23 @@
+{
+  "name": "Prehension.Editor",
+  "rootNamespace": "",
+  "references": [
+    "Prehension.Runtime",
+    "Unity.XR.OpenXR",
+    "Unity.EditorCoroutines.Editor",
+    "Newtonsoft.Json",
+    "Unity.XR.Interaction.Toolkit",
+    "Unity.XR.CoreUtils"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

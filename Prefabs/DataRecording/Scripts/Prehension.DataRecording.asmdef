@@ -1,0 +1,36 @@
+{
+  "name": "Prehension.DataRecording",
+  "rootNamespace": "",
+  "references": [
+    "Unity.InputSystem",
+    "Unity.XR.Interaction.Toolkit",
+    "Unity.XR.CoreUtils",
+    "Unity.XR.Hands",
+    "Unity.Mathematics"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [
+    {
+      "name": "com.unity.xr.hands",
+      "expression": "1.1.0",
+      "define": "XR_HANDS_1_1_OR_NEWER"
+    },
+    {
+      "name": "com.unity.xr.hands",
+      "expression": "1.2.0",
+      "define": "XR_HANDS_1_2_OR_NEWER"
+    },
+    {
+      "name": "com.unity.xr.hands",
+      "expression": "1.5.0",
+      "define": "XR_HANDS_1_5_OR_NEWER"
+    }
+  ],
+  "noEngineReferences": false
+}

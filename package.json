@@ -1,0 +1,20 @@
+{
+  "name": "com.prehension.sdk",
+  "version": "0.2.0",
+  "displayName": "Prehension SDK",
+  "description": "Gesture recognition plugin for Unity",
+  "unity": "2022.3",
+  "author": {
+    "name": "Prehension",
+    "url": "https://prehension-ai.github.io"
+  },
+  "documentationUrl": "https://prehension-ai.github.io",
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.xr.hands": "1.7.3",
+    "com.unity.xr.interaction.toolkit": "3.0.7",
+    "com.unity.editorcoroutines": "1.0.1",
+    "com.unity.xr.openxr": "1.16.1",
+    "com.unity.nuget.newtonsoft-json": "3.2.2"
+  }
+}
