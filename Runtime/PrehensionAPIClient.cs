@@ -95,7 +95,7 @@ internal class PrehensionAPIClient : MonoBehaviour
         public GestureSampleSerializable[] gestures;
     }
 
-    internal const string BaseUrl = "https://prehensionai.com";
+    internal const string BaseUrl = "https://api.prehensionai.com";
     private const string baseUrl = BaseUrl;
     internal const string PendingJobSessionKey = "Prehension.PendingJobId";
     internal const string PendingDownloadUrlSessionKey = "Prehension.PendingDownloadUrl";
