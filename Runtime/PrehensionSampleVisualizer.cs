@@ -96,6 +96,19 @@ internal class PrehensionSampleVisualizer : MonoBehaviour
 #endif
     }
 
+    public void ClearSample()
+    {
+        sampleData = null;
+        jointTransforms = null;
+        currentFrame = 0;
+
+        if (currentHandInstance != null)
+        {
+            Destroy(currentHandInstance);
+            currentHandInstance = null;
+        }
+    }
+
     private void SetupHandInstance(GameObject prefab)
     {
         if (currentHandInstance != null)

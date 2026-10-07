@@ -1,6 +1,6 @@
 {
   "name": "com.prehension.sdk",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "displayName": "Prehension SDK",
   "description": "Gesture recognition plugin for Unity",
   "unity": "2022.3",

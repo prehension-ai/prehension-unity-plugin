@@ -56,7 +56,7 @@ internal class PrehensionConfigEditor : Editor
             SerializedProperty samplesProp = element.FindPropertyRelative("samples");
             bool samplesExpanded = _samplesFoldoutStates.TryGetValue(samplesProp.propertyPath, out bool sv) && sv;
             float samplesHeight = lineH + (samplesExpanded ? GetSampleList(element, samplesProp).GetHeight() : 0f);
-            return 9 * lineH + samplesHeight;
+            return 10 * lineH + samplesHeight;
         };
 
         gestureList.drawElementCallback = (rect, index, isActive, isFocused) =>
@@ -130,6 +130,14 @@ internal class PrehensionConfigEditor : Editor
             EditorGUI.PropertyField(
                 new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
                 isHoldGestureProp, new GUIContent("Fire and Hold", "If enabled, a GestureReleased event fires when the pose drops. Competing gestures must sustain their full build frames to end the hold; brief blips are tolerated."));
+
+            rect.y += EditorGUIUtility.singleLineHeight + 4;
+
+            // Static pose
+            SerializedProperty isStaticPoseProp = element.FindPropertyRelative("isStaticPose");
+            EditorGUI.PropertyField(
+                new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
+                isStaticPoseProp, new GUIContent("Static Pose", "If enabled, this gesture is defined purely by hand shape — position and movement are ignored. The backend augments and trains it as a pose rather than a motion."));
 
             rect.y += EditorGUIUtility.singleLineHeight + 4;
 

@@ -25,6 +25,10 @@ internal class PrehensionDataRecorder : MonoBehaviour
     
     private XRHandSubsystem handSubsystem;
 
+    private static readonly Color recordingColor = Color.red;
+    private Color defaultWheelColor;
+    private Color defaultTextColor;
+
     private bool recording = false;
     private PrehensionConfig.Handedness recordingHandedness;
     private XRHand RecordingHand => recordingHandedness == PrehensionConfig.Handedness.Left
@@ -49,6 +53,9 @@ internal class PrehensionDataRecorder : MonoBehaviour
         {
             Debug.LogWarning("[Prehension] No XRHandSubsystem found. Is XR Hands configured in your project?");
         }
+
+        defaultWheelColor = progressWheel.color;
+        defaultTextColor = statusText.color;
 
         progressWheel.fillAmount = 0;
         statusText.text = "";
@@ -103,6 +110,8 @@ internal class PrehensionDataRecorder : MonoBehaviour
         StartRecording();
 
         statusText.text = "REC";
+        statusText.color = recordingColor;
+        progressWheel.color = recordingColor;
 
         timer = 0f;
         while(timer < recordingDuration)
@@ -114,6 +123,8 @@ internal class PrehensionDataRecorder : MonoBehaviour
 
         StopRecording();
         progressWheel.fillAmount = 0;
+        progressWheel.color = defaultWheelColor;
+        statusText.color = defaultTextColor;
         statusText.text = "Saved";
 
         handVisualization.SetActive(true);

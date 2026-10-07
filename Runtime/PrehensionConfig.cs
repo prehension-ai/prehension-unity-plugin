@@ -21,6 +21,7 @@ internal class PrehensionConfig : ScriptableObject
         public bool active;
         public bool rapidReFire;
         public bool isHoldGesture;
+        public bool isStaticPose; // pose-only gesture: hand shape matters, position/movement do not
         public int buildFramesOverride; // 0 = use global value
         public Handedness handedness;
         public string mirrorFromGestureUuid;

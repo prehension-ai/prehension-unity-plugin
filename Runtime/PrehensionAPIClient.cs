@@ -36,6 +36,12 @@ internal class PrehensionAPIClient : MonoBehaviour
     }
 
     [System.Serializable]
+    private class ServerErrorResponse
+    {
+        public string error;
+    }
+
+    [System.Serializable]
     internal class GestureSyncResponse
     {
         public List<GestureAndSampleEntry> gestures;
@@ -47,6 +53,7 @@ internal class PrehensionAPIClient : MonoBehaviour
         public string id;
         public string handedness;
         public string mirror_from_gesture_id;
+        public bool is_static_pose;
         public List<string> samples;
     }
 
@@ -105,7 +112,45 @@ internal class PrehensionAPIClient : MonoBehaviour
 
     void Awake()
     {
+        EnsureProjectDetails();
+    }
+
+    // UnityWebRequest.error is just the HTTP status line; the server explains rejections (invalid or
+    // expired API key, etc.) in a JSON body like {"error": "..."}, so include that when it's there.
+    private static string DescribeError(UnityWebRequest request)
+    {
+        string body = request.downloadHandler?.text;
+        if (!string.IsNullOrEmpty(body) && body.TrimStart().StartsWith("{"))
+        {
+            try
+            {
+                string serverMessage = JsonUtility.FromJson<ServerErrorResponse>(body)?.error;
+                if (!string.IsNullOrEmpty(serverMessage))
+                    return $"{request.error} - {serverMessage}";
+            }
+            catch (ArgumentException)
+            {
+                // body wasn't valid JSON; fall through to the plain status line
+            }
+        }
+        return request.error;
+    }
+
+    // Statics are wiped by every domain reload (script recompile, play mode enter/exit) and Awake
+    // doesn't reliably re-run for edit-mode components, so every entry point reloads on demand.
+    private static void EnsureProjectDetails()
+    {
+        if (_projectDetails != null) return;
+
+        if (!File.Exists(PrehensionPaths.ProjectDetailsPath))
+        {
+            Debug.LogError($"[Prehension] Project details not found at {PrehensionPaths.ProjectDetailsPath}. Run Prehension setup to link this project.");
+            return;
+        }
+
         _projectDetails = JsonUtility.FromJson<ProjectDetails>(File.ReadAllText(PrehensionPaths.ProjectDetailsPath));
+        if (_projectDetails == null)
+            Debug.LogError($"[Prehension] Could not parse project details at {PrehensionPaths.ProjectDetailsPath}.");
     }
 
 
@@ -137,17 +182,22 @@ internal class PrehensionAPIClient : MonoBehaviour
         }
 
         string configJSON = SerializeConfigToJson();
+        if (configJSON == null) return;
         EditorCoroutineUtility.StartCoroutine(GetGesturesMissingFromDatabase(configJSON), this);
     }
 
     public void PrehensionAPI_GenerateModelFromDatabase()
     {
         string configJSON = SerializeConfigToJson();
+        if (configJSON == null) return;
         EditorCoroutineUtility.StartCoroutine(GenerateModel(configJSON), this);
     }
 
     public string SerializeConfigToJson()
     {
+        EnsureProjectDetails();
+        if (_projectDetails == null) return null;
+
         PrehensionConfigAPIFormat requestAPIConfig = new PrehensionConfigAPIFormat();
         requestAPIConfig.project_id = _projectDetails.project_id;
         requestAPIConfig.null_right_gesture_id = config.nullRightGestureUuid;
@@ -161,6 +211,7 @@ internal class PrehensionAPIClient : MonoBehaviour
                 entry.id = gesture.uuid;
                 entry.handedness = gesture.handedness == PrehensionConfig.Handedness.Left ? "left" : "right";
                 entry.mirror_from_gesture_id = gesture.mirrorFromGestureUuid;
+                entry.is_static_pose = gesture.isStaticPose;
                 List<string> samplesList = new List<string>();
                 foreach(PrehensionConfig.Sample sample in gesture.samples)
                 {
@@ -192,7 +243,7 @@ internal class PrehensionAPIClient : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log($"[Prehension] Gesture sync failed: {request.error}");
+                Debug.Log($"[Prehension] Gesture sync failed: {DescribeError(request)}");
                 yield break;
             }
 
@@ -290,7 +341,7 @@ internal class PrehensionAPIClient : MonoBehaviour
 
                 if(request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogError($"[Prehension] Gesture upload failed on batch {batchIndex}/{totalBatches}: {request.error}");
+                    Debug.LogError($"[Prehension] Gesture upload failed on batch {batchIndex}/{totalBatches}: {DescribeError(request)}");
                 }
                 else
                 {
@@ -333,7 +384,7 @@ internal class PrehensionAPIClient : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log($"[Prehension] Config upload failed: {request.error}");
+                Debug.Log($"[Prehension] Config upload failed: {DescribeError(request)}");
                 Progress.Finish(progressID, Progress.Status.Failed);
                 SessionState.EraseString(PendingJobSessionKey);
                 yield break;
@@ -350,8 +401,7 @@ internal class PrehensionAPIClient : MonoBehaviour
 
     public static IEnumerator PollForCompletionAndDownload(string jobID, int progressID)
     {
-        if (_projectDetails == null)
-            _projectDetails = JsonUtility.FromJson<ProjectDetails>(File.ReadAllText(PrehensionPaths.ProjectDetailsPath));
+        EnsureProjectDetails();
 
         string pollProgressUri = $"{baseUrl}/api/v1/get-download-url/{jobID}/";
         string downloadUrl = "";
@@ -367,7 +417,7 @@ internal class PrehensionAPIClient : MonoBehaviour
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.Log($"[Prehension] Request for model generation progress failed: {request.error}");
+                    Debug.Log($"[Prehension] Request for model generation progress failed: {DescribeError(request)}");
                     Progress.Finish(progressID, Progress.Status.Failed);
                     SessionState.EraseString(PendingJobSessionKey);
                     yield break;
@@ -403,8 +453,7 @@ internal class PrehensionAPIClient : MonoBehaviour
 
     public static IEnumerator DownloadModel(string url, int progressID)
     {
-        if (_projectDetails == null)
-            _projectDetails = JsonUtility.FromJson<ProjectDetails>(File.ReadAllText(PrehensionPaths.ProjectDetailsPath));
+        EnsureProjectDetails();
 
         using (UnityWebRequest request = new UnityWebRequest(url, "GET"))
         {
@@ -415,7 +464,7 @@ internal class PrehensionAPIClient : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.Log($"[Prehension] Error downloading model from server: {request.error}");
+                Debug.Log($"[Prehension] Error downloading model from server: {DescribeError(request)}");
                 Progress.Finish(progressID, Progress.Status.Failed);
                 SessionState.EraseString(PendingDownloadUrlSessionKey);
                 yield break;
@@ -437,6 +486,7 @@ internal class PrehensionAPIClient : MonoBehaviour
             using (var zipStream = new MemoryStream(zipData))
             using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Read))
             {
+                Directory.CreateDirectory("Assets/StreamingAssets");
                 foreach (string filename in new[] { "model_dev.enc", "model_release.enc" })
                 {
                     var entry = archive.GetEntry(filename);
@@ -465,8 +515,7 @@ internal class PrehensionAPIClient : MonoBehaviour
 
     public static IEnumerator RenewCredential(Action<string> onSuccess, Action<string> onError = null)
     {
-        if (_projectDetails == null)
-            _projectDetails = JsonUtility.FromJson<ProjectDetails>(File.ReadAllText(PrehensionPaths.ProjectDetailsPath));
+        EnsureProjectDetails();
 
         CredentialRequest credentialRequest = new CredentialRequest
         {
@@ -490,8 +539,9 @@ internal class PrehensionAPIClient : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"[Prehension] Credential renewal failed: {request.error}");
-                onError?.Invoke(request.error);
+                string errorMessage = DescribeError(request);
+                Debug.LogError($"[Prehension] Credential renewal failed: {errorMessage}");
+                onError?.Invoke(errorMessage);
                 yield break;
             }
 

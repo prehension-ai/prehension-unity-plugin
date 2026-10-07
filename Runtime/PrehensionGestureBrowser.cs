@@ -35,6 +35,8 @@ internal class PrehensionGestureBrowser : MonoBehaviour
     public void ShowGestures()
     {
         selectedSampleButton = null;
+        handVisualizer.GetComponent<PrehensionSampleVisualizer>().ClearSample();
+        handVisualizer.SetActive(false);
         ClearList();
         foreach (var gesture in config.gestures)
         {
@@ -52,7 +54,11 @@ internal class PrehensionGestureBrowser : MonoBehaviour
         // Add a 'Back' button
         GameObject backBtn = Instantiate(gestureButtonPrefab, listParent);
         backBtn.GetComponentInChildren<TextMeshProUGUI>().text = "< Back";
-        backBtn.GetComponent<Button>().onClick.AddListener(ShowGestures);
+        backBtn.GetComponent<Button>().onClick.AddListener(() =>
+        {
+            ClearSelection();
+            ShowGestures();
+        });
 
         for (int i = 0; i < gesture.samples.Count; i++)
         {
@@ -64,6 +70,16 @@ internal class PrehensionGestureBrowser : MonoBehaviour
 
             btn.GetComponent<Button>().onClick.AddListener(() => SelectSample(btn, gesture, sample, index));
         }
+    }
+
+    void ClearSelection()
+    {
+        config.currentRecordingGestureName = null;
+        config.currentRecordingGestureUuid = null;
+        config.currentRecordingSampleIndex = 0;
+        config.currentRecordingSampleUuid = null;
+
+        recordButton.gameObject.SetActive(false);
     }
 
     void SelectSample(GameObject button, PrehensionConfig.Gesture gesture, PrehensionConfig.Sample sample, int index)
